@@ -21,11 +21,31 @@ jobs:
         settings-path: ${{ github.workspace }}
 
     - name: Notify Build Start
-      uses: slackapi/slack-github-action@v1.24.0
+      uses: 8398a7/action-slack@v3
       with:
-        channel-id: 'C0893M7DX45'  # Leave empty to use the webhook's default channel
-        slack-message: "🚀 Starting build and publish for notificationapi-java-server-sdk"
+        status: custom
+        fields: repo,message,commit,workflow
+        custom_payload: |
+          {
+            "text": "🚀 Starting build and publish for notificationapi-java-server-sdk",
+            "attachments": [{
+              "color": "good",
+              "fields": [
+                {
+                  "title": "Repository",
+                  "value": "{repo}",
+                  "short": true
+                },
+                {
+                  "title": "Commit",
+                  "value": "{commit}",
+                  "short": true
+                }
+              ]
+            }]
+          }
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         
     - name: Build with Maven
@@ -47,18 +67,20 @@ jobs:
 
     - name: Notify Success
       if: success()
-      uses: slackapi/slack-github-action@v1.24.0
+      uses: 8398a7/action-slack@v3
       with:
-        channel-id: 'C0893M7DX45'  # Leave empty to use the webhook's default channel
-        slack-message: "✅ Successfully built and published notificationapi-java-server-sdk"
+        status: ${{ job.status }}
+        fields: repo,message,commit,workflow,took
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_SUCCESS_WEBHOOK_URL }}
 
     - name: Notify Failure
       if: failure()
-      uses: slackapi/slack-github-action@v1.24.0
+      uses: 8398a7/action-slack@v3
       with:
-        channel-id: 'C089K7J4F6D'  # Leave empty to use the webhook's default channel
-        slack-message: "❌ Failed to build/publish notificationapi-java-server-sdk\nSee: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        status: ${{ job.status }}
+        fields: repo,message,commit,workflow,took
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_FAILED_WEBHOOK_URL }} 
