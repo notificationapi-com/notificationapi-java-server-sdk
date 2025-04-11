@@ -23,10 +23,8 @@ jobs:
     - name: Notify Build Start
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        payload: |
-          {
-            "text": "🚀 Starting build and publish for notificationapi-java-server-sdk"
-          }
+        channel-id: 'C0893M7DX45'  # Leave empty to use the webhook's default channel
+        slack-message: "🚀 Starting build and publish for notificationapi-java-server-sdk"
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         
@@ -51,10 +49,8 @@ jobs:
       if: success()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        payload: |
-          {
-            "text": "✅ Successfully built and published notificationapi-java-server-sdk"
-          }
+        channel-id: 'C0893M7DX45'  # Leave empty to use the webhook's default channel
+        slack-message: "✅ Successfully built and published notificationapi-java-server-sdk"
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_SUCCESS_WEBHOOK_URL }}
 
@@ -62,9 +58,7 @@ jobs:
       if: failure()
       uses: slackapi/slack-github-action@v1.24.0
       with:
-        payload: |
-          {
-            "text": "❌ Failed to build/publish notificationapi-java-server-sdk\nSee: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          }
+        channel-id: 'C089K7J4F6D'  # Leave empty to use the webhook's default channel
+        slack-message: "❌ Failed to build/publish notificationapi-java-server-sdk\nSee: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_FAILED_WEBHOOK_URL }} 
