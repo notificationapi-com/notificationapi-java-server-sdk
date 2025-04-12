@@ -46,7 +46,12 @@ jobs:
        
     - name: Test SNAPSHOT deployment (dry-run)
       if: matrix.java == '17' # Only test deployment with the latest Java version
-      run: mvn -B deploy -DaltDeploymentRepository=ossrh::default::file://local-deployment -DskipTests
+      run: |
+        mvn -B deploy \
+        -DaltDeploymentRepository=ossrh::default::file://local-deployment \
+        -DskipTests \
+        -Dossrh.username=${{ secrets.OSSRH_USERNAME }} \
+        -Dossrh.password=${{ secrets.OSSRH_TOKEN }}
       env:
         OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
