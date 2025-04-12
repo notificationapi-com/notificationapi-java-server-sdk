@@ -3,6 +3,8 @@ name: Publish Package
 on:
   push:
     branches: [ main ]
+  release:
+    types: [created]
 
 jobs:
   publish:
@@ -17,37 +19,23 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: 'maven'
-        server-id: github
+        server-id: ossrh
+        server-username: ${{ secrets.OSSRH_USERNAME }}
+        server-password: ${{ secrets.OSSRH_TOKEN }}
+        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
         settings-path: ${{ github.workspace }}
 
-    - name: Notify Build Start
-      uses: 8398a7/action-slack@v3
+    - name: Set Version
+      id: set_version
+      uses: actions/github-script@v4
+      if: github.event_name == 'release'
       with:
-        status: custom
-        fields: repo,message,commit,workflow
-        custom_payload: |
-          {
-            "text": "🚀 Starting build and publish for notificationapi-java-server-sdk",
-            "attachments": [{
-              "color": "good",
-              "fields": [
-                {
-                  "title": "Repository",
-                  "value": "{repo}",
-                  "short": true
-                },
-                {
-                  "title": "Commit",
-                  "value": "{commit}",
-                  "short": true
-                }
-              ]
-            }]
-          }
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        
+        script: |
+          const noRef = context.ref.replace('refs/tags/', '')
+          const noPrefix = noRef.replace('v', '')
+          core.setOutput('version', noPrefix)
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
       
@@ -60,27 +48,14 @@ jobs:
     - name: Generate Javadoc
       run: mvn -B javadoc:javadoc --file pom.xml
 
-    - name: Publish to GitHub Packages
-      run: mvn --batch-mode deploy
+    - name: Publish to Maven Central
+      run: |
+        if [ "${{ github.event_name }}" == "release" ]; then
+          mvn --batch-mode versions:set -DnewVersion=${{ steps.set_version.outputs.version }}
+        fi
+        mvn --batch-mode deploy -P release
       env:
-        GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+        MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
-    - name: Notify Success
-      if: success()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        fields: repo,message,commit,workflow,took
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_SUCCESS_WEBHOOK_URL }}
-
-    - name: Notify Failure
-      if: failure()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        fields: repo,message,commit,workflow,took
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_FAILED_WEBHOOK_URL }} 

@@ -4,7 +4,7 @@ This is the official Java Server SDK for [NotificationAPI](https://www.notificat
 
 ## Installation
 
-Add the following dependency to your `pom.xml` file:
+Add the following dependency to your project's `pom.xml`:
 
 ```xml
 <dependency>
@@ -82,7 +82,3 @@ try (NotificationApi api = new NotificationApi(clientId, clientSecret)) {
 
 - Java 11 or later
 - Maven or Gradle build system
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
