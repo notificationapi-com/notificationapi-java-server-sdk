@@ -46,7 +46,7 @@ jobs:
        
     - name: Test SNAPSHOT deployment (dry-run)
       if: matrix.java == '17' # Only test deployment with the latest Java version
-      run: mvn -B deploy -DaltDeploymentRepository=central::default::file://local-deployment -DskipTests
+      run: mvn -B deploy -DaltDeploymentRepository=central::default::file://local-deployment -DskipTests --settings ${{ github.workspace }}/settings.xml
       env:
         OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
