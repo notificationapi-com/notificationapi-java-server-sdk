@@ -41,12 +41,16 @@ jobs:
       
     - name: Configure GPG
       run: |
-        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        mkdir -p ~/.gnupg
+        chmod 700 ~/.gnupg
+        echo "use-agent" > ~/.gnupg/gpg.conf
         echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
-        gpg-connect-agent reloadagent /bye
+        echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+        chmod 600 ~/.gnupg/*
+        gpg --list-keys
         
     - name: Verify GPG signing
-      run: mvn -B verify -Dgpg.skip=false --file pom.xml
+      run: mvn -B verify -Dgpg.skip=false -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --file pom.xml
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         
