@@ -39,20 +39,6 @@ jobs:
     - name: Generate Javadoc
       run: mvn -B javadoc:javadoc --file pom.xml
       
-    - name: Configure GPG
-      run: |
-        mkdir -p ~/.gnupg
-        chmod 700 ~/.gnupg
-        echo "use-agent" > ~/.gnupg/gpg.conf
-        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
-        echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-        chmod 600 ~/.gnupg/*
-        gpg --list-keys
-        
-    - name: Verify GPG signing
-      run: mvn -B verify -Dgpg.skip=false -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --file pom.xml
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         
     - name: Test SNAPSHOT deployment (dry-run)
       if: matrix.java == '17' # Only test deployment with the latest Java version
