@@ -21,10 +21,10 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
         server-id: ossrh
-        server-username: OSSRH_USERNAME
-        server-password: OSSRH_TOKEN
+        server-username: ${{ secrets.OSSRH_USERNAME }}
+        server-password: ${{ secrets.OSSRH_TOKEN }}
         gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-        gpg-passphrase: GPG_PASSPHRASE
+        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
         settings-path: ${{ github.workspace }}
         
     - name: Build with Maven
@@ -38,8 +38,12 @@ jobs:
       
     - name: Generate Javadoc
       run: mvn -B javadoc:javadoc --file pom.xml
-      
         
+    - name: Verify GPG signing
+      run: mvn -B verify -Dgpg.skip=false -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --file pom.xml
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+       
     - name: Test SNAPSHOT deployment (dry-run)
       if: matrix.java == '17' # Only test deployment with the latest Java version
       run: mvn -B deploy -DaltDeploymentRepository=ossrh::default::file://local-deployment -DskipTests
