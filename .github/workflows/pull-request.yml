@@ -20,7 +20,7 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
         cache: 'maven'
-        server-id: ossrh
+        server-id: central
         server-username: ${{ secrets.OSSRH_USERNAME }}
         server-password: ${{ secrets.OSSRH_TOKEN }}
         gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -40,19 +40,12 @@ jobs:
       run: mvn -B javadoc:javadoc --file pom.xml
         
     - name: Verify GPG signing
-      run: mvn -B verify -Dgpg.skip=false -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} --file pom.xml
+      run: mvn -B verify -Dgpg.skip=false --file pom.xml
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
        
-    - name: Test SNAPSHOT deployment (dry-run)
-      if: matrix.java == '17' # Only test deployment with the latest Java version
-      run: |
-        mvn -B deploy \
-        -DaltDeploymentRepository=ossrh::default::file://local-deployment \
-        -DskipTests \
-        -Dossrh.username=${{ secrets.OSSRH_USERNAME }} \
-        -Dossrh.password=${{ secrets.OSSRH_TOKEN }}
+    - name: Test deployment (dry-run)
+      if: matrix.java == '17'
+      run: mvn -B deploy -DskipTests
       env:
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }} 
