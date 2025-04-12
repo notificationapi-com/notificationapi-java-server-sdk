@@ -50,7 +50,7 @@ jobs:
         mvn -B deploy \
         -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} \
         -DskipTests \
-        --settings ${{ github.workspace }}/settings-security.xml
+        --settings ${{ github.workspace }}/.github/workflows/settings-security.xml
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
