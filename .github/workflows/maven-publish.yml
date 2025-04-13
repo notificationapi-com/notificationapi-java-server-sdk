@@ -20,15 +20,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
-      - name: Set up Maven Central Repository
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-      
       - name: Import GPG key
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY }}" > private.asc
@@ -41,16 +32,23 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
         run: |
-          # Create settings.xml with GPG passphrase config
+          # Create settings.xml with proper server configurations
           mkdir -p ~/.m2
-          echo '<settings>
+          cat > ~/.m2/settings.xml << EOF
+          <settings>
             <servers>
               <server>
+                <id>central</id>
+                <username>\${env.MAVEN_USERNAME}</username>
+                <password>\${env.MAVEN_PASSWORD}</password>
+              </server>
+              <server>
                 <id>gpg.passphrase</id>
-                <passphrase>${env.GPG_PASSPHRASE}</passphrase>
+                <passphrase>\${env.GPG_PASSPHRASE}</passphrase>
               </server>
             </servers>
-          </settings>' > ~/.m2/settings.xml
+          </settings>
+          EOF
 
           # Build and deploy
           mvn -B clean deploy 
