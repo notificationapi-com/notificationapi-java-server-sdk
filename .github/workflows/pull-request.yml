@@ -41,7 +41,15 @@ jobs:
         
     - name: Deploy package
       run: |
-        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+        # Import the GPG key
+        echo -n "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+        # Configure GPG to use a non-interactive pinentry
+        mkdir -p ~/.gnupg
+        echo "use-agent" > ~/.gnupg/gpg.conf
+        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+        echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+        gpg-agent --daemon
+        # List keys and deploy
         gpg --list-secret-keys --keyid-format LONG
         mvn clean deploy -P release -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
       env:
