@@ -48,13 +48,15 @@ jobs:
         echo "use-agent" > ~/.gnupg/gpg.conf
         echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
         echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-        gpg-agent --daemon
-        # List keys and deploy
-        gpg --list-secret-keys --keyid-format LONG
-        mvn clean deploy -P release -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        # Get the key ID
+        export GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
+        echo "Using GPG key: $GPG_KEY_ID"
+        # Deploy with explicit key configuration
+        mvn clean deploy -P release \
+          -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} \
+          -Dgpg.keyname=$GPG_KEY_ID
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
 
