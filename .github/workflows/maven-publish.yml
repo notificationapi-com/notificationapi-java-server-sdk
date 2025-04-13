@@ -1,9 +1,9 @@
 name: Publish to Maven Central
 
 on:
-  workflow_dispatch:  # Manual trigger
   release:
-    types: [created]  # Trigger on new release
+    types: [created]
+  workflow_dispatch:
   pull_request:
     branches: [ main ]
 
@@ -18,70 +18,18 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          server-id: central
-          server-username: ${{ secrets.MAVEN_USERNAME }}
-          server-password: ${{ secrets.MAVEN_PASSWORD }}
+          cache: maven
       
       - name: Import GPG Key
-        run: |
-          # Setup GPG directory permissions
-          mkdir -p ~/.gnupg/
-          chmod 700 ~/.gnupg/
-          
-          # Configure GPG for non-interactive use
-          echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
-          echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
-          
-          # Save and import the GPG key
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-          
-          # List imported keys for debugging
-          gpg --list-secret-keys --keyid-format LONG
-          
-          # Export the key ID to be used later
-          echo "GPG_KEY_ID=FBA828E595188169" >> $GITHUB_ENV
-          
-      - name: Build and Publish package
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+      
+      - name: Publish to Maven Central
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          # Create Maven settings
-          mkdir -p ~/.m2
-                    
-          # Ensure settings.xml has proper configurations
-          cat > ~/.m2/settings.xml << EOF
-          <settings>
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${MAVEN_USERNAME}</username>
-                <password>${MAVEN_PASSWORD}</password>
-              </server>
-              <server>
-                <id>gpg.passphrase</id>
-                <passphrase>${GPG_PASSPHRASE}</passphrase>
-              </server>
-            </servers>
-            <profiles>
-              <profile>
-                <id>gpg</id>
-                <properties>
-                  <gpg.executable>gpg</gpg.executable>
-                  <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
-                  <gpg.keyname>FBA828E595188169</gpg.keyname>
-                </properties>
-              </profile>
-            </profiles>
-            <activeProfiles>
-              <activeProfile>gpg</activeProfile>
-            </activeProfiles>
-          </settings>
-          EOF
-          
-          # Print debug info
-          echo "Maven settings created. Deploying with Maven..."
-          
-          # Build and deploy with explicit keyname
-          mvn -B clean deploy -Dgpg.passphrase="${GPG_PASSPHRASE}" -Dgpg.keyname=FBA828E595188169 
+          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+        run: mvn -B clean deploy -s .mvn/settings.xml 

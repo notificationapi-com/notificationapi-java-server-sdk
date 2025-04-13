@@ -6,7 +6,7 @@
 
     <groupId>com.notificationapi</groupId>
     <artifactId>notificationapi-java-server-sdk</artifactId>
-    <version>0.1.3</version>
+    <version>0.1.5</version>
     <packaging>jar</packaging>
 
     <!-- Project metadata -->
