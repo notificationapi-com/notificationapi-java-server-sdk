@@ -33,6 +33,6 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        GPG_KEY_NAME: ${{ steps.import_gpg.outputs.keyid }}
+        GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
       run: |
-        mvn -e -q clean deploy -s .mvn/settings.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dgpg.keyname=${{ steps.import_gpg.outputs.keyid }}
+        mvn -e -q clean deploy -s .mvn/settings.xml -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dgpg.keyname=${{ secrets.GPG_KEY_NAME }}
