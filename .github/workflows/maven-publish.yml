@@ -21,16 +21,22 @@ jobs:
           server-id: central
           server-username: ${{ secrets.MAVEN_USERNAME }}
           server-password: ${{ secrets.MAVEN_PASSWORD }}
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
       
-      - name: Configure GPG Key
+      - name: Import GPG Key
         run: |
           # Setup GPG directory permissions
           mkdir -p ~/.gnupg/
           chmod 700 ~/.gnupg/
+          
+          # Configure GPG for non-interactive use
           echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
           echo "pinentry-mode loopback" > ~/.gnupg/gpg.conf
+          
+          # Save and import the GPG key
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          
+          # List imported keys for debugging
+          gpg --list-secret-keys --keyid-format LONG
           
       - name: Build and Publish package
         env:
@@ -39,21 +45,10 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
         run: |
-          # Create settings-security.xml
+          # Create Maven settings
           mkdir -p ~/.m2
-          
-          # Add the gpg.passphrase configuration to settings.xml
-          cat > ~/.m2/settings-security.xml << EOF
-          <settingsSecurity>
-            <master>${GPG_PASSPHRASE}</master>
-          </settingsSecurity>
-          EOF
-          
-          # Ensure settings.xml has proper GPG passphrase configuration
-          if [ -f ~/.m2/settings.xml ]; then
-            mv ~/.m2/settings.xml ~/.m2/settings.xml.bak
-          fi
-          
+                    
+          # Ensure settings.xml has proper configurations
           cat > ~/.m2/settings.xml << EOF
           <settings>
             <servers>
@@ -73,7 +68,6 @@ jobs:
                 <properties>
                   <gpg.executable>gpg</gpg.executable>
                   <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
-                  <gpg.keyname>${GPG_KEY_NAME}</gpg.keyname>
                 </properties>
               </profile>
             </profiles>
@@ -87,4 +81,4 @@ jobs:
           echo "Maven settings created. Deploying with Maven..."
           
           # Build and deploy
-          mvn -B clean deploy -Dgpg.passphrase=${GPG_PASSPHRASE} 
+          mvn -B clean deploy -Dgpg.passphrase="${GPG_PASSPHRASE}" -Dgpg.keyname="${GPG_KEY_NAME}" 
