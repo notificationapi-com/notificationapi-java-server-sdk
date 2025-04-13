@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.notificationapi</groupId>
     <artifactId>notificationapi-java-server-sdk</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
 
     <!-- Project metadata -->
     <name>NotificationAPI Java Server SDK</name>
-    <description>NotificationAPI Java Server SDK</description>
+    <description>NotificationAPI Java Server SDK - A Java SDK for integrating with NotificationAPI services</description>
     <url>https://github.com/notificationapi-com/notificationapi-java-server-sdk</url>
 
     <!-- Dependencies -->
@@ -36,13 +36,14 @@
         <license>
             <name>The Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
     <!-- Developer information -->
     <developers>
         <developer>
-            <name>NotificationAPI</name>
+            <name>Mohammad Asadi</name>
             <organization>NotificationAPI</organization>
             <organizationUrl>https://notificationapi.com</organizationUrl>
         </developer>
@@ -53,19 +54,8 @@
         <connection>scm:git:git://github.com/notificationapi-com/notificationapi-java-server-sdk.git</connection>
         <developerConnection>scm:git:ssh://github.com:notificationapi-com/notificationapi-java-server-sdk.git</developerConnection>
         <url>https://github.com/notificationapi-com/notificationapi-java-server-sdk</url>
+        <tag>HEAD</tag>
     </scm>
-
-    <!-- Distribution management -->
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <!-- Build plugins -->
     <build>
@@ -84,7 +74,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <!-- Javadoc JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -99,7 +89,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <!-- GPG Signing -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -113,28 +103,19 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
+                            <keyname>${env.GPG_KEY_NAME}</keyname>
+                            <passphraseServerId>gpg.passphrase</passphraseServerId>
                             <gpgArguments>
                                 <arg>--pinentry-mode</arg>
                                 <arg>loopback</arg>
+                                <arg>--digest-algo</arg>
+                                <arg>SHA512</arg>
                             </gpgArguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-            
-            <!-- Nexus Staging Plugin -->
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.13</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
-            
+
             <!-- Checkstyle Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -156,6 +137,19 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Central Publishing Plugin -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
+                </configuration>
             </plugin>
         </plugins>
     </build>
