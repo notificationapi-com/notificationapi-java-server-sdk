@@ -4,6 +4,8 @@ on:
   workflow_dispatch:  # Manual trigger
   release:
     types: [created]  # Trigger on new release
+  pull_request:
+    branches: [ main ]
 
 jobs:
   publish:
