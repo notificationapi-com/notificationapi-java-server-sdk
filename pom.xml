@@ -6,7 +6,7 @@
 
     <groupId>com.notificationapi</groupId>
     <artifactId>notificationapi-java-server-sdk</artifactId>
-    <version>0.1.5</version>
+    <version>0.1.9</version>
     <packaging>jar</packaging>
 
     <!-- Project metadata -->
@@ -152,6 +152,10 @@
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
+                    <tokenAuth>
+                        <username>${env.MAVEN_USERNAME}</username>
+                        <password>${env.MAVEN_PASSWORD}</password>
+                    </tokenAuth>
                     <autoPublish>true</autoPublish>
                     <waitUntil>published</waitUntil>
                 </configuration>
