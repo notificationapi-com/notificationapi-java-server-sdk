@@ -33,8 +33,11 @@ jobs:
         # Clean up
         rm ~/private.key
         
-        # List imported keys
+        # List imported keys and save the key ID
         gpg --list-secret-keys --keyid-format LONG
+        # Verify the key is available with the correct ID
+        echo "Verifying key availability with ID: ${{ secrets.GPG_KEY_NAME }}"
+        gpg --list-secret-keys ${{ secrets.GPG_KEY_NAME }}
 
     - name: Build and Publish with Maven
       env:
@@ -67,6 +70,7 @@ jobs:
                     <properties>
                         <gpg.keyname>\${env.GPG_KEY_NAME}</gpg.keyname>
                         <gpg.passphrase>\${env.GPG_PASSPHRASE}</gpg.passphrase>
+                        <gpg.executable>gpg</gpg.executable>
                     </properties>
                 </profile>
             </profiles>
@@ -76,10 +80,14 @@ jobs:
         </settings>
         EOF
         
-        # Set environment variables and run Maven
+        # Debug GPG configuration
+        echo "Configured GPG key: $GPG_KEY_NAME"
+        gpg --list-keys $GPG_KEY_NAME
+        
+        # Set environment variables and run Maven with debug for GPG
         export MAVEN_USERNAME=${{ secrets.MAVEN_USERNAME }}
         export MAVEN_PASSWORD="${{ secrets.MAVEN_PASSWORD }}"
         export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
         export GPG_KEY_NAME=${{ secrets.GPG_KEY_NAME }}
         
-        mvn clean deploy --settings ~/.m2/settings.xml
+        mvn clean deploy -Dgpg.keyname=$GPG_KEY_NAME -Dgpg.passphrase=$GPG_PASSPHRASE --settings ~/.m2/settings.xml
