@@ -18,6 +18,10 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Import GPG key
+      run: |
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+        gpg --list-secret-keys --keyid-format LONG
 
     - name: Build and Publish with Maven
       env:
