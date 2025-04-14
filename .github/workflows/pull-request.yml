@@ -40,8 +40,8 @@ jobs:
 
     - name: Build and Publish with Maven
       env:
-        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       run: |
         # Create settings.xml file
@@ -54,8 +54,8 @@ jobs:
             <servers>
                 <server>
                     <id>central</id>
-                    <username>\${env.MAVEN_USERNAME}</username>
-                    <password>\${env.MAVEN_PASSWORD}</password>
+                    <username>\${env.OSSRH_USERNAME}</username>
+                    <password>\${env.OSSRH_TOKEN}</password>
                 </server>
                 <server>
                     <id>gpg.passphrase</id>
@@ -77,8 +77,8 @@ jobs:
                         <activeByDefault>true</activeByDefault>
                     </activation>
                     <properties>
-                        <central.username>\${env.MAVEN_USERNAME}</central.username>
-                        <central.password>\${env.MAVEN_PASSWORD}</central.password>
+                        <central.username>\${env.OSSRH_USERNAME}</central.username>
+                        <central.password>\${env.OSSRH_TOKEN}</central.password>
                     </properties>
                 </profile>
             </profiles>
@@ -94,8 +94,8 @@ jobs:
         gpg --list-keys $GPG_KEY_ID
         
         # Set environment variables and run Maven with debug for GPG
-        export MAVEN_USERNAME=${{ secrets.MAVEN_USERNAME }}
-        export MAVEN_PASSWORD="${{ secrets.MAVEN_PASSWORD }}"
+        export OSSRH_USERNAME=${{ secrets.OSSRH_USERNAME }}
+        export OSSRH_TOKEN="${{ secrets.OSSRH_TOKEN }}"
         export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
         
-        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE -Dcentral.username=$MAVEN_USERNAME -Dcentral.password=$MAVEN_PASSWORD --settings ~/.m2/settings.xml
+        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE -Dcentral.username=$OSSRH_USERNAME -Dcentral.password=$OSSRH_TOKEN --settings ~/.m2/settings.xml
