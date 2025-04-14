@@ -7,96 +7,97 @@ on:
     types: [created]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Set up JDK 11
+
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
-        cache: 'maven'
-        server-id: ossrh
-        server-username: ${{ secrets.OSSRH_USERNAME }}
-        server-password: ${{ secrets.OSSRH_TOKEN }}
-        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-        settings-path: ${{ github.workspace }}
+        cache: maven
 
-    - name: Set Version
-      id: set_version
-      uses: actions/github-script@v4
-      if: github.event_name == 'release'
-      with:
-        script: |
-          const noRef = context.ref.replace('refs/tags/', '')
-          const noPrefix = noRef.replace('v', '')
-          core.setOutput('version', noPrefix)
-
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-      
-    - name: Run tests
-      run: mvn -B test --file pom.xml
-      
-    - name: Check code style
-      run: mvn -B checkstyle:check --file pom.xml
-      
-    - name: Generate Javadoc
-      run: mvn -B javadoc:javadoc --file pom.xml
-
-    - name: Publish to Maven Central
+    - name: Import GPG key
       run: |
-        if [ "${{ github.event_name }}" == "release" ]; then
-          mvn --batch-mode versions:set -DnewVersion=${{ steps.set_version.outputs.version }}
-        fi
-        mvn --batch-mode deploy -P release
+        # Setup GPG directory
+        mkdir -p ~/.gnupg
+        chmod 700 ~/.gnupg
+        
+        # Write key to file
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" > ~/private.key
+        
+        # Import the key
+        gpg --batch --import ~/private.key
+        
+        # Clean up
+        rm ~/private.key
+        
+        # Extract key ID from the imported key
+        GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
+        echo "Imported GPG key ID: $GPG_KEY_ID"
+        echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
+
+    - name: Build and Publish with Maven
       env:
-        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-
-    - name: Wait for Maven Central Sync
-      if: github.event_name == 'release'
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        echo "Waiting for artifacts to sync to Maven Central..."
-        # Wait for up to 30 minutes (180 * 10 seconds)
-        for i in {1..180}; do
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://repo1.maven.org/maven2/com/notificationapi/notificationapi-java-server-sdk/${{ steps.set_version.outputs.version }}/)
-          if [ $STATUS -eq 200 ]; then
-            echo "✅ Artifacts found in Maven Central!"
-            break
-          fi
-          echo "Attempt $i: Artifacts not yet available (status: $STATUS). Waiting 10 seconds..."
-          sleep 10
-        done
-        if [ $STATUS -ne 200 ]; then
-          echo "❌ Timeout waiting for artifacts to appear in Maven Central"
-          exit 1
-        fi
-
-    - name: Verify Maven Central Artifacts
-      if: github.event_name == 'release'
-      run: |
-        VERSION=${{ steps.set_version.outputs.version }}
-        BASE_URL="https://repo1.maven.org/maven2/com/notificationapi/notificationapi-java-server-sdk/$VERSION/notificationapi-java-server-sdk-$VERSION"
+        # Create settings.xml file
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <servers>
+                <server>
+                    <id>central</id>
+                    <username>\${env.OSSRH_USERNAME}</username>
+                    <password>\${env.OSSRH_TOKEN}</password>
+                </server>
+                <server>
+                    <id>gpg.passphrase</id>
+                    <passphrase>\${env.GPG_PASSPHRASE}</passphrase>
+                </server>
+            </servers>
+            <profiles>
+                <profile>
+                    <id>gpg</id>
+                    <properties>
+                        <gpg.keyname>\${env.GPG_KEY_ID}</gpg.keyname>
+                        <gpg.passphrase>\${env.GPG_PASSPHRASE}</gpg.passphrase>
+                        <gpg.executable>gpg</gpg.executable>
+                    </properties>
+                </profile>
+                <profile>
+                    <id>central</id>
+                    <activation>
+                        <activeByDefault>true</activeByDefault>
+                    </activation>
+                    <properties>
+                        <central.username>\${env.OSSRH_USERNAME}</central.username>
+                        <central.password>\${env.OSSRH_TOKEN}</central.password>
+                    </properties>
+                </profile>
+            </profiles>
+            <activeProfiles>
+                <activeProfile>gpg</activeProfile>
+                <activeProfile>central</activeProfile>
+            </activeProfiles>
+        </settings>
+        EOF
         
-        # List of expected files
-        FILES=(".jar" ".jar.asc" ".pom" ".pom.asc" "-javadoc.jar" "-javadoc.jar.asc" "-sources.jar" "-sources.jar.asc")
+        # Debug GPG configuration
+        echo "Using GPG key ID: $GPG_KEY_ID"
+        gpg --list-keys $GPG_KEY_ID
         
-        echo "Verifying all artifacts for version $VERSION..."
-        for FILE in "${FILES[@]}"; do
-          URL="$BASE_URL$FILE"
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
-          if [ $HTTP_CODE -eq 200 ]; then
-            echo "✅ Found $FILE"
-          else
-            echo "❌ Missing $FILE (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-        done
-        echo "✅ All required artifacts verified in Maven Central!"
-
+        # Set environment variables and run Maven with debug for GPG
+        export OSSRH_USERNAME=${{ secrets.OSSRH_USERNAME }}
+        export OSSRH_TOKEN="${{ secrets.OSSRH_TOKEN }}"
+        export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
+        
+        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE -Dcentral.username=$OSSRH_USERNAME -Dcentral.password=$OSSRH_TOKEN --settings ~/.m2/settings.xml

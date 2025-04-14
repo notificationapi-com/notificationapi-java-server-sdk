@@ -1,4 +1,4 @@
-name: Pull Request CI
+name: Pull Request Pipeline
 
 on:
   pull_request:
@@ -7,95 +7,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '11', '17' ]
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Set up JDK 17
+    
+    - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: ${{ matrix.java }}
         distribution: 'temurin'
-        cache: maven
-
-    - name: Import GPG key
-      run: |
-        # Setup GPG directory
-        mkdir -p ~/.gnupg
-        chmod 700 ~/.gnupg
+        cache: 'maven'
+        server-id: central
+        server-username: ${{ secrets.OSSRH_USERNAME }}
+        server-password: ${{ secrets.OSSRH_TOKEN }}
+        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        settings-path: ${{ github.workspace }}
         
-        # Write key to file
-        echo "${{ secrets.GPG_PRIVATE_KEY }}" > ~/private.key
-        
-        # Import the key
-        gpg --batch --import ~/private.key
-        
-        # Clean up
-        rm ~/private.key
-        
-        # Extract key ID from the imported key
-        GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
-        echo "Imported GPG key ID: $GPG_KEY_ID"
-        echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
-
-    - name: Build and Publish with Maven
-      env:
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      run: |
-        # Create settings.xml file
-        mkdir -p ~/.m2
-        cat > ~/.m2/settings.xml << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <servers>
-                <server>
-                    <id>central</id>
-                    <username>\${env.OSSRH_USERNAME}</username>
-                    <password>\${env.OSSRH_TOKEN}</password>
-                </server>
-                <server>
-                    <id>gpg.passphrase</id>
-                    <passphrase>\${env.GPG_PASSPHRASE}</passphrase>
-                </server>
-            </servers>
-            <profiles>
-                <profile>
-                    <id>gpg</id>
-                    <properties>
-                        <gpg.keyname>\${env.GPG_KEY_ID}</gpg.keyname>
-                        <gpg.passphrase>\${env.GPG_PASSPHRASE}</gpg.passphrase>
-                        <gpg.executable>gpg</gpg.executable>
-                    </properties>
-                </profile>
-                <profile>
-                    <id>central</id>
-                    <activation>
-                        <activeByDefault>true</activeByDefault>
-                    </activation>
-                    <properties>
-                        <central.username>\${env.OSSRH_USERNAME}</central.username>
-                        <central.password>\${env.OSSRH_TOKEN}</central.password>
-                    </properties>
-                </profile>
-            </profiles>
-            <activeProfiles>
-                <activeProfile>gpg</activeProfile>
-                <activeProfile>central</activeProfile>
-            </activeProfiles>
-        </settings>
-        EOF
-        
-        # Debug GPG configuration
-        echo "Using GPG key ID: $GPG_KEY_ID"
-        gpg --list-keys $GPG_KEY_ID
-        
-        # Set environment variables and run Maven with debug for GPG
-        export OSSRH_USERNAME=${{ secrets.OSSRH_USERNAME }}
-        export OSSRH_TOKEN="${{ secrets.OSSRH_TOKEN }}"
-        export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-        
-        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE -Dcentral.username=$OSSRH_USERNAME -Dcentral.password=$OSSRH_TOKEN --settings ~/.m2/settings.xml
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+      
+    - name: Run tests
+      run: mvn -B test --file pom.xml
+      
+    - name: Check code style
+      run: mvn -B checkstyle:check --file pom.xml
+      
+    - name: Generate Javadoc
+      run: mvn -B javadoc:javadoc --file pom.xml
+    
