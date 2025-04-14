@@ -71,9 +71,20 @@ jobs:
                         <gpg.executable>gpg</gpg.executable>
                     </properties>
                 </profile>
+                <profile>
+                    <id>central</id>
+                    <activation>
+                        <activeByDefault>true</activeByDefault>
+                    </activation>
+                    <properties>
+                        <central.username>\${env.MAVEN_USERNAME}</central.username>
+                        <central.password>\${env.MAVEN_PASSWORD}</central.password>
+                    </properties>
+                </profile>
             </profiles>
             <activeProfiles>
                 <activeProfile>gpg</activeProfile>
+                <activeProfile>central</activeProfile>
             </activeProfiles>
         </settings>
         EOF
@@ -87,4 +98,4 @@ jobs:
         export MAVEN_PASSWORD="${{ secrets.MAVEN_PASSWORD }}"
         export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
         
-        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE --settings ~/.m2/settings.xml
+        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE -Dcentral.username=$MAVEN_USERNAME -Dcentral.password=$MAVEN_PASSWORD --settings ~/.m2/settings.xml
