@@ -33,18 +33,16 @@ jobs:
         # Clean up
         rm ~/private.key
         
-        # List imported keys and save the key ID
-        gpg --list-secret-keys --keyid-format LONG
-        # Verify the key is available with the correct ID
-        echo "Verifying key availability with ID: ${{ secrets.GPG_KEY_NAME }}"
-        gpg --list-secret-keys ${{ secrets.GPG_KEY_NAME }}
+        # Extract key ID from the imported key
+        GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
+        echo "Imported GPG key ID: $GPG_KEY_ID"
+        echo "GPG_KEY_ID=$GPG_KEY_ID" >> $GITHUB_ENV
 
     - name: Build and Publish with Maven
       env:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        GPG_KEY_NAME: ${{secrets.GPG_KEY_NAME}}
       run: |
         # Create settings.xml file
         mkdir -p ~/.m2
@@ -68,7 +66,7 @@ jobs:
                 <profile>
                     <id>gpg</id>
                     <properties>
-                        <gpg.keyname>\${env.GPG_KEY_NAME}</gpg.keyname>
+                        <gpg.keyname>\${env.GPG_KEY_ID}</gpg.keyname>
                         <gpg.passphrase>\${env.GPG_PASSPHRASE}</gpg.passphrase>
                         <gpg.executable>gpg</gpg.executable>
                     </properties>
@@ -81,13 +79,12 @@ jobs:
         EOF
         
         # Debug GPG configuration
-        echo "Configured GPG key: $GPG_KEY_NAME"
-        gpg --list-keys $GPG_KEY_NAME
+        echo "Using GPG key ID: $GPG_KEY_ID"
+        gpg --list-keys $GPG_KEY_ID
         
         # Set environment variables and run Maven with debug for GPG
         export MAVEN_USERNAME=${{ secrets.MAVEN_USERNAME }}
         export MAVEN_PASSWORD="${{ secrets.MAVEN_PASSWORD }}"
         export GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-        export GPG_KEY_NAME=${{ secrets.GPG_KEY_NAME }}
         
-        mvn clean deploy -Dgpg.keyname=$GPG_KEY_NAME -Dgpg.passphrase=$GPG_PASSPHRASE --settings ~/.m2/settings.xml
+        mvn clean deploy -Dgpg.keyname=$GPG_KEY_ID -Dgpg.passphrase=$GPG_PASSPHRASE --settings ~/.m2/settings.xml
