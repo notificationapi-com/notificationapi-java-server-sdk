@@ -20,7 +20,20 @@ jobs:
 
     - name: Import GPG key
       run: |
-        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+        # Setup GPG directory
+        mkdir -p ~/.gnupg
+        chmod 700 ~/.gnupg
+        
+        # Write key to file
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" > ~/private.key
+        
+        # Import the key
+        gpg --batch --import ~/private.key
+        
+        # Clean up
+        rm ~/private.key
+        
+        # List imported keys
         gpg --list-secret-keys --keyid-format LONG
 
     - name: Build and Publish with Maven
