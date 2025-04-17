@@ -1,86 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.notificationapi</groupId>
     <artifactId>notificationapi-java-server-sdk</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.12</version>
     <packaging>jar</packaging>
 
+    <!-- Project metadata -->
     <name>NotificationAPI Java Server SDK</name>
-    <description>Java Server SDK for NotificationAPI</description>
+    <description>NotificationAPI Java Server SDK - A Java SDK for integrating with NotificationAPI services</description>
     <url>https://github.com/notificationapi-com/notificationapi-java-server-sdk</url>
 
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-        </license>
-    </licenses>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/notificationapi-com/notificationapi-java-server-sdk</url>
-        </repository>
-    </distributionManagement>
-
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <checkstyle.version>10.12.3</checkstyle.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- Dependencies -->
     <dependencies>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
-        </dependency>
+        <!-- Jackson for JSON processing -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.15.2</version>
         </dependency>
-        <!-- Test dependencies -->
+
+        <!-- Apache HttpClient -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.9.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.3.1</version>
-            <scope>test</scope>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
     </dependencies>
 
+    <!-- License information -->
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- Developer information -->
+    <developers>
+        <developer>
+            <name>Mohammad Asadi</name>
+            <organization>NotificationAPI</organization>
+            <organizationUrl>https://notificationapi.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <!-- SCM information -->
+    <scm>
+        <connection>scm:git:git://github.com/notificationapi-com/notificationapi-java-server-sdk.git</connection>
+        <developerConnection>scm:git:ssh://github.com:notificationapi-com/notificationapi-java-server-sdk.git</developerConnection>
+        <url>https://github.com/notificationapi-com/notificationapi-java-server-sdk</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <!-- Build plugins -->
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.0</version>
-            </plugin>
+            <!-- Source JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -90,6 +80,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Javadoc JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -103,19 +95,39 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- GPG Signing -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <passphraseServerId>gpg.passphrase</passphraseServerId>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                                <arg>--digest-algo</arg>
+                                <arg>SHA512</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Checkstyle Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.puppycrawl.tools</groupId>
-                        <artifactId>checkstyle</artifactId>
-                        <version>${checkstyle.version}</version>
-                    </dependency>
-                </dependencies>
+                <version>3.6.0</version>
                 <configuration>
-                    <configLocation>google_checks.xml</configLocation>
+                    <configLocation>checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
@@ -131,6 +143,23 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Central Publishing Plugin -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <tokenAuth>
+                        <username>${env.MAVEN_USERNAME}</username>
+                        <password>${env.MAVEN_PASSWORD}</password>
+                    </tokenAuth>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-</project> 
+</project>

@@ -20,6 +20,12 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
         cache: 'maven'
+        server-id: central
+        server-username: ${{ secrets.OSSRH_USERNAME }}
+        server-password: ${{ secrets.OSSRH_TOKEN }}
+        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+        gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        settings-path: ${{ github.workspace }}
         
     - name: Build with Maven
       run: mvn -B package --file pom.xml
@@ -31,4 +37,5 @@ jobs:
       run: mvn -B checkstyle:check --file pom.xml
       
     - name: Generate Javadoc
-      run: mvn -B javadoc:javadoc --file pom.xml 
+      run: mvn -B javadoc:javadoc --file pom.xml
+    
