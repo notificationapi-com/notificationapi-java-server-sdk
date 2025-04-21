@@ -23,8 +23,11 @@ import com.notificationapi.NotificationApi;
 import com.notificationapi.model.NotificationRequest;
 import com.notificationapi.model.User;
 
-// Initialize the client
+// Initialize the client with default base URL (https://api.notificationapi.com)
 NotificationApi api = new NotificationApi("your_client_id", "your_client_secret");
+
+// Or initialize with a custom base URL (e.g., EU region)
+NotificationApi apiEu = new NotificationApi("your_client_id", "your_client_secret", "https://api.eu.notificationapi.com");
 
 // Create a user
 User user = new User("user123")
