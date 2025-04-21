@@ -26,30 +26,47 @@ import java.util.Base64;
  * Main client class for interacting with the NotificationAPI service.
  */
 public class NotificationApi implements AutoCloseable {
-    private static final String BASE_URL = "https://api.notificationapi.com";
+    private static final String DEFAULT_BASE_URL = "https://api.notificationapi.com";
     private final String clientId;
     private final String clientSecret;
     private final String authToken;
+    private final String baseUrl;
     private final CloseableHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     /**
-     * Constructs a new NotificationApi client.
+     * Constructs a new NotificationApi client with default base URL.
      *
      * @param clientId your NotificationAPI client ID
      * @param clientSecret your NotificationAPI client secret
      * @throws IllegalArgumentException if clientId or clientSecret is null or empty
      */
     public NotificationApi(String clientId, String clientSecret) {
+        this(clientId, clientSecret, DEFAULT_BASE_URL);
+    }
+
+    /**
+     * Constructs a new NotificationApi client with a custom base URL.
+     *
+     * @param clientId your NotificationAPI client ID
+     * @param clientSecret your NotificationAPI client secret
+     * @param baseUrl custom base URL for the API
+     * @throws IllegalArgumentException if clientId, clientSecret, or baseUrl is null or empty
+     */
+    public NotificationApi(String clientId, String clientSecret, String baseUrl) {
         if (clientId == null || clientId.trim().isEmpty()) {
             throw new IllegalArgumentException("clientId cannot be null or empty");
         }
         if (clientSecret == null || clientSecret.trim().isEmpty()) {
             throw new IllegalArgumentException("clientSecret cannot be null or empty");
         }
+        if (baseUrl == null || baseUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("baseUrl cannot be null or empty");
+        }
 
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.baseUrl = baseUrl;
         this.authToken = Base64.getEncoder().encodeToString(
             (clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8)
         );
@@ -84,7 +101,7 @@ public class NotificationApi implements AutoCloseable {
 
     private String sendRequest(String method, String uri, Object data) throws IOException {
         HttpRequestBase request;
-        String url = BASE_URL + "/" + clientId + "/" + uri;
+        String url = baseUrl + "/" + clientId + "/" + uri;
 
         switch (method) {
             case "GET":
