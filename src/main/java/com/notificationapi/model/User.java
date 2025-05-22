@@ -17,6 +17,30 @@ public class User {
     @JsonProperty("number")
     private String number;
 
+    @JsonProperty("pushTokens")
+    private java.util.List<PushToken> pushTokens;
+
+    @JsonProperty("webPushTokens")
+    private java.util.List<WebPushToken> webPushTokens;
+
+    @JsonProperty("timezone")
+    private String timezone;
+
+    @JsonProperty("lastSeenTime")
+    private String lastSeenTime;
+
+    @JsonProperty("slackChannelName")
+    private String slackChannelName;
+
+    @JsonProperty("slackToken")
+    private SlackToken slackToken;
+
+    @JsonProperty("updatedAt")
+    private String updatedAt;
+
+    @JsonProperty("createdAt")
+    private String createdAt;
+
     /**
      * Default constructor for User.
      */
@@ -91,4 +115,28 @@ public class User {
         this.number = number;
         return this;
     }
+
+    public java.util.List<PushToken> getPushTokens() { return pushTokens; }
+    public User setPushTokens(java.util.List<PushToken> pushTokens) { this.pushTokens = pushTokens; return this; }
+
+    public java.util.List<WebPushToken> getWebPushTokens() { return webPushTokens; }
+    public User setWebPushTokens(java.util.List<WebPushToken> webPushTokens) { this.webPushTokens = webPushTokens; return this; }
+
+    public String getTimezone() { return timezone; }
+    public User setTimezone(String timezone) { this.timezone = timezone; return this; }
+
+    public String getLastSeenTime() { return lastSeenTime; }
+    public User setLastSeenTime(String lastSeenTime) { this.lastSeenTime = lastSeenTime; return this; }
+
+    public String getSlackChannelName() { return slackChannelName; }
+    public User setSlackChannelName(String slackChannelName) { this.slackChannelName = slackChannelName; return this; }
+
+    public SlackToken getSlackToken() { return slackToken; }
+    public User setSlackToken(SlackToken slackToken) { this.slackToken = slackToken; return this; }
+
+    public String getUpdatedAt() { return updatedAt; }
+    public User setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; return this; }
+
+    public String getCreatedAt() { return createdAt; }
+    public User setCreatedAt(String createdAt) { this.createdAt = createdAt; return this; }
 } 
